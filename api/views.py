@@ -102,8 +102,8 @@ def setup_browser():
 
     print(proxy)
 
-    browser = playwright.chromium.launch(headless=True,
-                                         proxy=proxy)
+   # browser = playwright.chromium.launch(headless=True,proxy=proxy)
+    browser = playwright.chromium.launch(headless=True)
     page = browser.new_page()
     return playwright, browser, page
 
