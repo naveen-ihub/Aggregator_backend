@@ -571,29 +571,64 @@ def get_not_fit_jobs(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
-async def scrapper(search_query_list):
+
+def scrapper(search_query_list):
     jobs = []
     for search_query in search_query_list:
-        tasks = [
-            freelancer_scrapper(search_query),
-            guru_scrapper(search_query),
-            upwork_scrapper(search_query),
-            peopleperhour_scrapper(search_query)
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for result in results:
-            if isinstance(result, list):
-                jobs.extend(result)
-            else:
-                print(f"Error in concurrent scraping: {result}")
-        
+        try:
+            freelancer_job = asyncio.run(freelancer_scrapper(search_query))
+            jobs.extend(freelancer_job)
+        except Exception as e:
+            print(f"Error scraping Freelancer for '{search_query}': {e}")
+
+        try:
+            guru_job = asyncio.run(guru_scrapper(search_query))
+            jobs.extend(guru_job)
+        except Exception as e:
+            print(f"Error scraping Guru for '{search_query}': {e}")
+
+        try:
+            upwork_job =asyncio.run(upwork_scrapper(search_query))
+            jobs.extend(upwork_job)
+        except Exception as e:
+            print(f"Error scraping Upwork for '{search_query}': {e}")
+
+        try:
+            peopleperhour_job = asyncio.run(peopleperhour_scrapper(search_query))
+            jobs.extend(peopleperhour_job)
+        except Exception as e:
+            print(f"Error scraping PeoplePerHour for '{search_query}': {e}")
+
         print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
 
-        with open("bun.json", "w") as f:
-            json.dump(jobs, f, indent=2)
-    
+       # with open("bun.json", "w") as f:
+        #    json.dump(jobs, f, indent=2)
+
     return jobs
+
+# async def scrapper(search_query_list):
+#     jobs = []
+#     for search_query in search_query_list:
+#         tasks = [
+#             freelancer_scrapper(search_query),
+#             guru_scrapper(search_query),
+#             upwork_scrapper(search_query),
+#             peopleperhour_scrapper(search_query)
+#         ]
+#         results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+#         for result in results:
+#             if isinstance(result, list):
+#                 jobs.extend(result)
+#             else:
+#                 print(f"Error in concurrent scraping: {result}")
+        
+#         print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
+
+#         with open("bun.json", "w") as f:
+#             json.dump(jobs, f, indent=2)
+    
+#     return jobs
 
 
 def perform_scraping(search_query, platform, username):
@@ -614,7 +649,8 @@ def perform_scraping(search_query, platform, username):
         if isinstance(search_query, str):
             search_query = [search_query]
         
-        jobs = asyncio.run(scrapper(search_query))
+        #jobs = asyncio.run(scrapper(search_query))
+        jobs = scrapper(search_queries)
 
         if not isinstance(jobs, list):
             logger.error(f"Scraper returned invalid data for {platform}: {jobs}")
