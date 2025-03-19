@@ -137,12 +137,14 @@ CORS_ALLOW_CREDENTIALS = True  # Allow credentials (cookies)
 
 CORS_ALLOWED_ORIGINS = [
     "https://aggregator-frontend-sooty.vercel.app",
-    "http://localhost:5173"
+    "https://aggregator-frontend-naveen-ihubs-projects.vercel.app",
+    "http://localhost:5173",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://aggregator-frontend-sooty.vercel.app",
-    "http://localhost:5173"
+    "https://aggregator-frontend-naveen-ihubs-projects.vercel.app",
+    "http://localhost:5173",
 ]
 
 
