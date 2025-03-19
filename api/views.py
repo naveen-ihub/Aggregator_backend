@@ -213,6 +213,8 @@ async def guru_scrapper(search_query):
         if "guru.com" not in page.url:
             raise Exception("Failed to load Guru.com jobs page")
 
+        await asyncio.sleep(5)
+
         job_cards = await page.locator("div.record__details").all()
         if not job_cards:
             print("No job listings found on the page")
@@ -293,6 +295,8 @@ async def upwork_scrapper(search_query):
         if not job_cards:
             print("No job listings found on the page")
 
+        await asyncio.sleep(5)
+
         for card in job_cards:
             try:
                 title_elem = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]')
@@ -358,6 +362,8 @@ async def peopleperhour_scrapper(search_query):
         await page.goto(url, wait_until='load')
         if "peopleperhour.com" not in page.url:
             raise Exception("Failed to load PeoplePerHour.com jobs page")
+
+        await asyncio.sleep(5)
 
         job_cards = await page.locator("//li[@class='list__item⤍List⤚2ytmm']").all()
         if not job_cards:
