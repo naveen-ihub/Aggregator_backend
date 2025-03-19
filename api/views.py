@@ -645,21 +645,34 @@ def get_not_fit_jobs(request):
         
 
 def scrapper(search_query_list):
-
     jobs = []
 
     for search_query in search_query_list:
+        try:
+            freelancer_job = freelancer_scrapper(search_query)
+            jobs.extend(freelancer_job)
+        except Exception as e:
+            print(f"Error scraping Freelancer for '{search_query}': {e}")
 
-        freelancer_job = freelancer_scrapper(search_query)
-        upwork_job = upwork_scrapper(search_query)
-        guru_job = guru_scrapper(search_query)
-        peopleperhour_job = peopleperhour_scrapper(search_query)
+        try:
+            upwork_job = upwork_scrapper(search_query)
+            jobs.extend(upwork_job)
+        except Exception as e:
+            print(f"Error scraping Upwork for '{search_query}': {e}")
 
-        jobs.extend(freelancer_job)
-        jobs.extend(upwork_job)
-        jobs.extend(guru_job)
-        jobs.extend(peopleperhour_job)
+        try:
+            guru_job = guru_scrapper(search_query)
+            jobs.extend(guru_job)
+        except Exception as e:
+            print(f"Error scraping Guru for '{search_query}': {e}")
 
+        try:
+            peopleperhour_job = peopleperhour_scrapper(search_query)
+            jobs.extend(peopleperhour_job)
+        except Exception as e:
+            print(f"Error scraping PeoplePerHour for '{search_query}': {e}")
+
+    
     print(f"Total jobs scraped for query '{search_query}':  {len(jobs)}")
 
     # with open("jobs.json", "w") as f:
