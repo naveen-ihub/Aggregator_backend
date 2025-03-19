@@ -101,9 +101,13 @@ async def setup_browser():
     playwright = await async_playwright().start()
     proxy = await get_random_proxy(proxy_list)
     
+   # browser = await playwright.chromium.launch(
+    #    headless=False,
+     #   proxy={"server": proxy["server"], "username": proxy["username"], "password": proxy["password"]}
+   # )
+
     browser = await playwright.chromium.launch(
-        headless=False,
-        proxy={"server": proxy["server"], "username": proxy["username"], "password": proxy["password"]}
+        headless=True
     )
     page = await browser.new_page()
     return playwright, browser, page
