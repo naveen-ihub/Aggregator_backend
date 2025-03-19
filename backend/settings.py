@@ -136,7 +136,8 @@ CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins (frontend and Postman)
 CORS_ALLOW_CREDENTIALS = True  # Allow credentials (cookies)
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", "https://aggregator-frontend-b0mvnm1sz-naveen-ihubs-projects.vercel.app" ]
+    '*'
+]
 
 CORS_ALLOW_HEADERS = [
     "Content-Type",
