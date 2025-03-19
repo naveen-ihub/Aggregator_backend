@@ -48,14 +48,14 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this at the top
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -136,8 +136,15 @@ CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins (frontend and Postman)
 CORS_ALLOW_CREDENTIALS = True  # Allow credentials (cookies)
 
 CORS_ALLOWED_ORIGINS = [
-    '*'
+    "https://aggregator-frontend-sooty.vercel.app",
+    "http://localhost:5173"
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://aggregator-frontend-sooty.vercel.app",
+    "http://localhost:5173"
+]
+
 
 CORS_ALLOW_HEADERS = [
     "Content-Type",
