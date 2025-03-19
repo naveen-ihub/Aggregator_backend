@@ -650,7 +650,7 @@ def perform_scraping(search_query, platform, username):
             search_query = [search_query]
         
         #jobs = asyncio.run(scrapper(search_query))
-        jobs = scrapper(search_queries)
+        jobs = scrapper(search_query)
 
         if not isinstance(jobs, list):
             logger.error(f"Scraper returned invalid data for {platform}: {jobs}")
