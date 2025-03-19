@@ -99,7 +99,7 @@ async def get_random_proxy(proxy_list):
 
 async def setup_browser():
     playwright = await async_playwright().start()
-    proxy = await get_random_proxy(proxy_list)
+    #proxy = await get_random_proxy(proxy_list)
     
    # browser = await playwright.chromium.launch(
     #    headless=False,
