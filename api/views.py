@@ -266,6 +266,7 @@ async def setup_browser():
     return playwright, browser, page
 
 
+
 async def freelancer_scrapper(search_query):
     playwright, browser, page = await setup_browser()
     jobs = []
@@ -577,6 +578,7 @@ async def peopleperhour_scrapper(search_query):
         await playwright.stop()
 
     return jobs
+
 
 
 
