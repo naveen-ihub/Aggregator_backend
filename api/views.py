@@ -329,7 +329,8 @@ async def freelancer_scrapper(search_query):
                         "keyword": search_query,
                         "platform": "freelancer.com"
                     }
-                    jobs.append(job_data)
+                    if title != "N/A" :
+                        jobs.append(job_data)
 
                 except Exception as e:
                     print(f"Error processing individual job: {e}")
