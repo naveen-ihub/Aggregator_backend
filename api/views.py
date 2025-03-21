@@ -71,6 +71,159 @@ def home(request):
     data = {"status": "working"}
     return Response(data, status=status.HTTP_200_OK)
 
+
+def remove_duplicates(jobs):
+    seen = set()
+    unique_jobs = []
+
+    for job in jobs:
+        # Create a unique identifier for each job based on username, title, and link
+        job_id = (job["username"], job["title"], job["link"])
+
+        if job_id not in seen:
+            seen.add(job_id)
+            unique_jobs.append(job)
+
+    return unique_jobs
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+@api_view(["GET"])
+def get_existing_jobs_count(request):
+    try:
+        username = request.GET.get("username", "").strip()
+        if not username:
+            return Response(
+                {"error": "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Fetch all jobs from the database for the specified user
+        all_jobs = list(jobs_collection.find({"username": username}))
+
+        # Calculate counts based on status
+        stats = {
+            "total": len(all_jobs),
+            "pending": len([job for job in all_jobs if job.get("status", "").lower() == "pending"]),
+            "contacted": len([job for job in all_jobs if job.get("status", "").lower() == "contacted"]),
+            "working": len([job for job in all_jobs if job.get("status", "").lower() == "working"]),
+            "completed": len([job for job in all_jobs if job.get("status", "").lower() == "completed"]),
+            "notFit": len([job for job in all_jobs if job.get("status", "").lower() == "notfit"]),
+        }
+
+        # New Metric 1: Total Saved Jobs
+        saved_jobs_count = saved_jobs_collection.count_documents({"username": username})
+        stats["saved"] = saved_jobs_count
+
+        # New Metric 2: Noted Jobs Count (unique jobs with notes)
+        noted_job_ids = set(note["job_id"] for note in notes_collection.find({"username": username}))
+        stats["noted"] = len(noted_job_ids)
+
+        # New Metric 3: Total Jobs Scraped Today
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        jobs_scraped_today = jobs_collection.count_documents({
+            "username": username,
+            "inserted_at": {"$gte": today_start, "$lt": today_end}
+        })
+        stats["scrapedToday"] = jobs_scraped_today
+
+        response_data = {
+            "counts": stats
+        }
+
+        print("Returning response:", response_data)  # Debugging
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(f"Error fetching job counts: {e}")
+        return Response(
+            {"error": f"Failed to fetch job counts: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(["GET"])
+def get_existing_jobs(request):
+    try:
+        username = request.GET.get("username", "").strip()
+        if not username:
+            return Response(
+                {"error": "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Fetch all jobs from the database for the specified user
+        all_jobs = list(jobs_collection.find({"username": username, "status": "Open"}))
+
+        print(f"Found {len(all_jobs)} open jobs for user {username}")  # Debugging
+
+        # Define 12-hour threshold for Latest Jobs
+        twelve_hours_ago = datetime.utcnow() - timedelta(hours=24)
+
+        # Latest Jobs: Jobs inserted within the last 12 hours
+        new_jobs = [
+            job for job in all_jobs
+            if "inserted_at" in job and job["inserted_at"] >= twelve_hours_ago
+        ]
+
+        # All Jobs: Jobs older than 12 hours
+        existing_jobs = [job for job in all_jobs if job not in new_jobs]
+
+        for job in new_jobs + existing_jobs:
+            job["_id"] = str(job["_id"])
+            job["inserted_at"] = job.get("inserted_at", "N/A")
+
+        response_data = {
+            "new_jobs": new_jobs,
+            "all_jobs": existing_jobs,
+            "new_job_found": False  # Set in scrape_jobs
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(f"Error fetching existing jobs: {e}")
+        return Response(
+            {"error": f"Failed to fetch jobs: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(["GET"])
+def get_not_fit_jobs(request):
+    try:
+        username = request.GET.get("username", "").strip()
+        if not username:
+            return Response(
+                {"error": "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Fetch all jobs from the database for the specified user with status "notFit"
+        all_jobs = list(jobs_collection.find({"username": username, "status": "notFit"}))
+
+        print(f"Found {len(all_jobs)} not fit jobs for user {username}")  # Debugging
+
+        for job in all_jobs:
+            job["_id"] = str(job["_id"])
+            job["inserted_at"] = job.get("inserted_at", "N/A")
+
+        response_data = {
+            "notFitJobs": all_jobs
+        }
+        print("Returning response:", response_data)  # Debugging
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(f"Error fetching not fit jobs: {e}")
+        return Response(
+            {"error": f"Failed to fetch jobs: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 proxy_list = [{'server': 'dc.oxylabs.io:8000', 'username': 'naveen_kY5lG', 'password': 'ea8vWq+NiqjurjkQ'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Gudbadugly_0cqzZ', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'ihubsns_zQVFs', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Testing_LoNLf', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'HarisankarJ_a5Nj2', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'akash_tNgmM', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Akilihub_Gy3Z1', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'mugilan_eGYDD', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'RNS_Sanjay_MZyzH', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'lathees_6pZh3', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'shruthi_1vvlk', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'kavin_bakyaraj_5cQ3F', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Ajay_Chakravarthi_B5RJy', 'password': 'SNS+ihub=123'}]
 
 
@@ -425,157 +578,7 @@ async def peopleperhour_scrapper(search_query):
 
     return jobs
 
-def remove_duplicates(jobs):
-    seen = set()
-    unique_jobs = []
 
-    for job in jobs:
-        # Create a unique identifier for each job based on username, title, and link
-        job_id = (job["username"], job["title"], job["link"])
-
-        if job_id not in seen:
-            seen.add(job_id)
-            unique_jobs.append(job)
-
-    return unique_jobs
-
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
-
-@api_view(["GET"])
-def get_existing_jobs_count(request):
-    try:
-        username = request.GET.get("username", "").strip()
-        if not username:
-            return Response(
-                {"error": "Username is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Fetch all jobs from the database for the specified user
-        all_jobs = list(jobs_collection.find({"username": username}))
-
-        # Calculate counts based on status
-        stats = {
-            "total": len(all_jobs),
-            "pending": len([job for job in all_jobs if job.get("status", "").lower() == "pending"]),
-            "contacted": len([job for job in all_jobs if job.get("status", "").lower() == "contacted"]),
-            "working": len([job for job in all_jobs if job.get("status", "").lower() == "working"]),
-            "completed": len([job for job in all_jobs if job.get("status", "").lower() == "completed"]),
-            "notFit": len([job for job in all_jobs if job.get("status", "").lower() == "notfit"]),
-        }
-
-        # New Metric 1: Total Saved Jobs
-        saved_jobs_count = saved_jobs_collection.count_documents({"username": username})
-        stats["saved"] = saved_jobs_count
-
-        # New Metric 2: Noted Jobs Count (unique jobs with notes)
-        noted_job_ids = set(note["job_id"] for note in notes_collection.find({"username": username}))
-        stats["noted"] = len(noted_job_ids)
-
-        # New Metric 3: Total Jobs Scraped Today
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = today_start + timedelta(days=1)
-        jobs_scraped_today = jobs_collection.count_documents({
-            "username": username,
-            "inserted_at": {"$gte": today_start, "$lt": today_end}
-        })
-        stats["scrapedToday"] = jobs_scraped_today
-
-        response_data = {
-            "counts": stats
-        }
-
-        print("Returning response:", response_data)  # Debugging
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        print(f"Error fetching job counts: {e}")
-        return Response(
-            {"error": f"Failed to fetch job counts: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(["GET"])
-def get_existing_jobs(request):
-    try:
-        username = request.GET.get("username", "").strip()
-        if not username:
-            return Response(
-                {"error": "Username is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Fetch all jobs from the database for the specified user
-        all_jobs = list(jobs_collection.find({"username": username, "status": "Open"}))
-
-        print(f"Found {len(all_jobs)} open jobs for user {username}")  # Debugging
-
-        # Define 12-hour threshold for Latest Jobs
-        twelve_hours_ago = datetime.utcnow() - timedelta(hours=24)
-
-        # Latest Jobs: Jobs inserted within the last 12 hours
-        new_jobs = [
-            job for job in all_jobs
-            if "inserted_at" in job and job["inserted_at"] >= twelve_hours_ago
-        ]
-
-        # All Jobs: Jobs older than 12 hours
-        existing_jobs = [job for job in all_jobs if job not in new_jobs]
-
-        for job in new_jobs + existing_jobs:
-            job["_id"] = str(job["_id"])
-            job["inserted_at"] = job.get("inserted_at", "N/A")
-
-        response_data = {
-            "new_jobs": new_jobs,
-            "all_jobs": existing_jobs,
-            "new_job_found": False  # Set in scrape_jobs
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        print(f"Error fetching existing jobs: {e}")
-        return Response(
-            {"error": f"Failed to fetch jobs: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(["GET"])
-def get_not_fit_jobs(request):
-    try:
-        username = request.GET.get("username", "").strip()
-        if not username:
-            return Response(
-                {"error": "Username is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Fetch all jobs from the database for the specified user with status "notFit"
-        all_jobs = list(jobs_collection.find({"username": username, "status": "notFit"}))
-
-        print(f"Found {len(all_jobs)} not fit jobs for user {username}")  # Debugging
-
-        for job in all_jobs:
-            job["_id"] = str(job["_id"])
-            job["inserted_at"] = job.get("inserted_at", "N/A")
-
-        response_data = {
-            "notFitJobs": all_jobs
-        }
-        print("Returning response:", response_data)  # Debugging
-        return Response(response_data, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        print(f"Error fetching not fit jobs: {e}")
-        return Response(
-            {"error": f"Failed to fetch jobs: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
 
 def scrapper(search_query_list):
     jobs = []
