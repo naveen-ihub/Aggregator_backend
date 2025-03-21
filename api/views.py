@@ -599,8 +599,8 @@ async def scrapper(search_query_list):
         
         print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
 
-        with open("bun.json", "w") as f:
-            json.dump(jobs, f, indent=2)
+        #with open("bun.json", "w") as f:
+         #   json.dump(jobs, f, indent=2)
     
     return jobs
 
