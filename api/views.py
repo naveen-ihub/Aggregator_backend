@@ -702,7 +702,7 @@ async def freelancer_scrapper(search_query, browser, context):
             await page.goto(f"https://www.freelancer.com/jobs/?keyword={search_query}&results=20", timeout=60000)
             if "freelancer.com" not in page.url:
                 raise Exception("Failed to load Freelancer.com jobs page")
-            await page.wait_for_load_state("domcontentloaded", timeout=1000000)
+            await page.wait_for_load_state("domcontentloaded", timeout=60000)
 
             await page.wait_for_selector("//input[@id='keyword-input']", timeout=60000)
             search_box = page.locator("//input[@id='keyword-input']")
