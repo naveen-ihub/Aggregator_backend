@@ -1129,6 +1129,20 @@ def createaccount(request):
                 "email": email,
                 "phone": phone,
                 "password": hashed_password,
+                "settings": {
+                "scrapingMode": "automatic",
+                "automaticScrapeInterval": {
+                  "hours": 0,
+                  "minutes": 1
+                },
+                "notificationsEnabled": true,
+                "notificationEmail": email,
+                "notificationKeywords": [],
+                "selectedPlatforms": {
+                  "freelancer": true,
+                  "upwork": true,
+                  "fiverr": false
+                }
             }
             meetings_collection.insert_one(user_data)
 
