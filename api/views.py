@@ -1109,6 +1109,7 @@ def createaccount(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body.decode("utf-8"))
+            print(data)
             username = data.get("username", "").strip()
             email = data.get("email", "").strip()
             phone = data.get("phone", "").strip()
@@ -1145,6 +1146,8 @@ def createaccount(request):
                 }
             }
             }
+
+            print(user_data)
             meetings_collection.insert_one(user_data)
 
             admin_data = {
