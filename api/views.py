@@ -1136,7 +1136,7 @@ def createaccount(request):
                   "hours": 0,
                   "minutes": 1
                 },
-                "notificationsEnabled": true,
+                "notificationsEnabled": True,
                 "notificationEmail": email,
                 "notificationKeywords": [],
                 "selectedPlatforms": {
