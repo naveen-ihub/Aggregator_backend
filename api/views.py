@@ -276,6 +276,8 @@ async def freelancer_scrapper(search_query):
         if "freelancer.com" not in page.url:
             raise Exception("Failed to load Freelancer.com jobs page")
 
+        await asyncio.sleep(3)
+
         await page.wait_for_selector("//input[@id='keyword-input']", timeout=60000)
         search_box = page.locator("//input[@id='keyword-input']")
 
@@ -368,7 +370,7 @@ async def guru_scrapper(search_query):
         if "guru.com" not in page.url:
             raise Exception("Failed to load Guru.com jobs page")
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
 
         job_cards = await page.locator("div.record__details").all()
         if not job_cards:
@@ -450,7 +452,7 @@ async def upwork_scrapper(search_query):
         if not job_cards:
             print("No job listings found on the page")
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
 
         for card in job_cards:
             try:
