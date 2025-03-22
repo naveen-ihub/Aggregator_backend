@@ -664,7 +664,7 @@ proxy_list = [{'server': 'dc.oxylabs.io:8000', 'username': 'naveen_kY5lG', 'pass
 
 
 # Semaphore for rate limiting (max 4 concurrent requests)
-semaphore = asyncio.Semaphore(4)
+semaphore = asyncio.Semaphore(50)
 
 async def get_random_proxy(proxy_list):
     tried_usernames = set()
