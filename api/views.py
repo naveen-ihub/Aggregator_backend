@@ -1578,6 +1578,35 @@ def delete_job_note(request, note_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )    
 
+@api_view(["DELETE"])
+def delete_job_notes(request, job_id):
+    try:
+        # Convert job_id to string if needed (since frontend sends it as a string)
+        job_id_str = str(job_id)
+
+        # Delete all notes associated with the job_id
+        result = notes_collection.delete_many({"job_id": job_id_str})
+
+        if result.deleted_count == 0:
+            return Response(
+                {"message": "No notes found for this job."},
+                status=status.HTTP_200_OK  # Still OK since it's not an error, just no notes
+            )
+
+        logger.info(f"Deleted {result.deleted_count} notes for job {job_id_str}")
+        return Response(
+            {"message": f"Deleted {result.deleted_count} note(s) successfully."},
+            status=status.HTTP_200_OK
+        )
+
+    except Exception as e:
+        logger.error(f"Error deleting notes for job {job_id}: {e}")
+        return Response(
+            {"error": f"Failed to delete notes: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 @api_view(["POST"])
 def save_job(request):
     try:
@@ -1753,3 +1782,4 @@ def send_notification_email(username, new_jobs, recipient_emails, matched_keywor
         logger.info(f"Notification email sent to {recipient_emails} for {username}")
     except Exception as email_error:
         logger.error(f"Error sending notification email to {recipient_emails}: {email_error}")     
+
