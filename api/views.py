@@ -1144,6 +1144,7 @@ def createaccount(request):
                   "fiverr": false
                 }
             }
+            }
             meetings_collection.insert_one(user_data)
 
             admin_data = {
