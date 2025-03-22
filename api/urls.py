@@ -35,9 +35,8 @@ urlpatterns = [
     path("add_job_note", add_job_note, name="add_job_note"),
     path("get_job_notes", get_job_notes, name="get_job_notes"),
     path("get_user_noted_jobs", get_user_noted_jobs, name="get_user_noted_jobs"),
-    path(
-        "delete_job_note/<str:note_id>", delete_job_note, name="delete_job_note"
-    ),  # New endpoint
+    path("delete_job_note/<str:note_id>", delete_job_note, name="delete_job_note"), 
+    path('delete_job_notes/<str:job_id>',delete_job_notes, name='delete_job_notes'),
     path("save_job", save_job, name="save_job"),
     path("get_saved_jobs", get_saved_jobs, name="get_saved_jobs"),
     path("remove_saved_job", remove_saved_job, name="remove_saved_job"),
