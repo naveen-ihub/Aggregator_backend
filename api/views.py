@@ -1140,9 +1140,9 @@ def createaccount(request):
                 "notificationEmail": email,
                 "notificationKeywords": [],
                 "selectedPlatforms": {
-                  "freelancer": true,
-                  "upwork": true,
-                  "fiverr": false
+                  "freelancer": True,
+                  "upwork": True,
+                  "fiverr": False
                 }
             }
             }
