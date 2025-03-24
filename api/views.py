@@ -700,11 +700,11 @@ async def freelancer_scrapper(search_query, browser, context):
         jobs = []
         try:
             await page.goto(f"https://www.freelancer.com/jobs/?keyword={search_query}&results=100")
-            await asyncio.sleep(5)
+            #await asyncio.sleep(5)
             if "freelancer.com" not in page.url:
                 raise Exception("Failed to load Freelancer.com jobs page")
             # await page.wait_for_load_state("domcontentloaded", timeout=1000000)
-            # await page.wait_for_selector("//input[@id='keyword-input']", timeout=100000)
+            await page.wait_for_selector("//input[@id='keyword-input']", timeout=100000)
             search_box = page.locator("//input[@id='keyword-input']")
             if not await search_box.is_visible() or not await search_box.is_enabled():
                 raise Exception("Search input field not interactable")
@@ -712,6 +712,7 @@ async def freelancer_scrapper(search_query, browser, context):
             await search_box.press("Enter")
             # await page.wait_for_load_state("domcontentloaded", timeout=60000)
 
+            await page.wait_for_selector(".JobSearchCard-item", timeout=100000)
             while True:
                 job_cards = await page.locator(".JobSearchCard-item").all()
                 if not job_cards:
@@ -765,8 +766,9 @@ async def freelancer_scrapper(search_query, browser, context):
                 next_button = page.locator("a[data-link='next_page']")
                 if await next_button.count() > 0 and await next_button.is_enabled():
                     await next_button.click()
-                    # await page.wait_for_load_state("domcontentloaded", timeout=60000)
-                    await page.wait_for_selector(".JobSearchCard-item", timeout=100000)
+                    await page.wait_for_load_state("domcontentloaded", timeout=100000)
+                    
+                    # await page.wait_for_selector(".JobSearchCard-item", timeout=100000)
                     print(f"Moving to next page. Current job count: {len(jobs)}")
                 else:
                     print("No more pages to scrape")
@@ -790,8 +792,8 @@ async def guru_scrapper(search_query, browser, context):
             await page.goto(url, wait_until='load')
             if "guru.com" not in page.url:
                 raise Exception("Failed to load Guru.com jobs page")
-            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
-            await page.wait_for_selector("//div[@class='record__details']", timeout=100000)
+            await page.wait_for_load_state("domcontentloaded", timeout=1000000)
+            #await page.wait_for_selector("//div[@class='record__details']", timeout=100000)
 
             job_cards = await page.locator("div.record__details").all()
             if not job_cards:
@@ -863,7 +865,7 @@ async def upwork_scrapper(search_query, browser, context):
             await page.goto(url, wait_until='load')
             if "upwork.com" not in page.url:
                 raise Exception("Failed to load Upwork.com jobs page")
-            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+            await page.wait_for_load_state("domcontentloaded", timeout=1000000)
             # await page.reload()
 
             job_cards = await page.locator('(//article[@data-ev-label="search_results_impression"])').all()
@@ -930,8 +932,8 @@ async def peopleperhour_scrapper(search_query, browser, context):
             await page.goto(url, wait_until='load')
             if "peopleperhour.com" not in page.url:
                 raise Exception("Failed to load PeoplePerHour.com jobs page")
-            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
-            await page.wait_for_selector("//li[@class='list__item⤍List⤚2ytmm']", timeout=100000)
+            await page.wait_for_load_state("domcontentloaded", timeout=1000000)
+            #await page.wait_for_selector("//li[@class='list__item⤍List⤚2ytmm']", timeout=100000)
 
             job_cards = await page.locator("//li[@class='list__item⤍List⤚2ytmm']").all()
             if not job_cards:
