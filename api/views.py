@@ -1325,6 +1325,7 @@ def generate_proposal(request):
         Concise, avoiding unnecessary fluff
         Client-focused, demonstrating understanding of their needs
         The proposal should be polished, error-free, and compelling to maximize the chances of winning the project.
+        dont mentions the same content like budget , skills as in the job details , make it as you are writing a proposal to ask him a project to work
         """
 
         # Configure generation settings
@@ -1580,17 +1581,56 @@ def fetch_admins(request):
 def delete_admin(request, admin_id):
     if request.method == "DELETE":
         try:
-            result = meetings_collection.delete_one({"_id": ObjectId(admin_id)})
-            if result.deleted_count == 1:
-                return JsonResponse(
-                    {"message": "Admin deleted successfully!"}, status=200
-                )
-            else:
+            # Step 1: Fetch the admin to get the username before deletion
+            admin = meetings_collection.find_one({"_id": ObjectId(admin_id)})
+            if not admin:
                 return JsonResponse({"error": "Admin not found."}, status=404)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-    return JsonResponse({"error": "Invalid request method."}, status=405)
+            
+            username = admin.get("username")
+            if not username:
+                return JsonResponse({"error": "Admin has no username."}, status=400)
 
+            # Step 2: Delete documents from all relevant collections
+            collections = {
+                "meetings_collection": meetings_collection,
+                "jobs_collection": jobs_collection,
+                "notes_collection": notes_collection,
+                "saved_jobs_collection": saved_jobs_collection,
+                "settings_collection": settings_collection
+            }
+            
+            deletion_results = {}
+            total_deleted = 0
+
+            # Delete from each collection and track results
+            for collection_name, collection in collections.items():
+                result = collection.delete_many({"username": username})
+                deleted_count = result.deleted_count
+                deletion_results[collection_name] = deleted_count
+                total_deleted += deleted_count
+                logger.info(f"Deleted {deleted_count} documents from {collection_name} for username: {username}")
+
+            # Step 3: Check if the admin was deleted from meetings_collection
+            if deletion_results["meetings_collection"] == 0:
+                return JsonResponse({"error": "Admin not found in meetings_collection after lookup."}, status=404)
+
+            # Step 4: Prepare detailed response
+            response_message = {
+                "message": "Admin and all associated data deleted successfully!",
+                "details": {
+                    "username": username,
+                    "total_deleted": total_deleted,
+                    "deleted_counts": deletion_results
+                }
+            }
+
+            return JsonResponse(response_message, status=200)
+
+        except Exception as e:
+            logger.error(f"Error deleting admin {admin_id} and associated data: {e}")
+            return JsonResponse({"error": f"Failed to delete admin and associated data: {str(e)}"}, status=500)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
 @csrf_exempt
 def edit_admin(request, admin_id):
@@ -2046,6 +2086,17 @@ def save_job(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+from datetime import datetime
+
+# Assuming these are your MongoDB collections
+# saved_jobs_collection = MongoClient().db.saved_jobs_collection
+# jobs_collection = MongoClient().db.jobs_collection
+
 @api_view(["GET"])
 def get_saved_jobs(request):
     try:
@@ -2056,19 +2107,26 @@ def get_saved_jobs(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Fetch all saved job IDs for the user
+        # Fetch all saved job entries for the user
         saved_jobs = list(saved_jobs_collection.find({"username": username}))
         if not saved_jobs:
             return Response({"saved_jobs": []}, status=status.HTTP_200_OK)
+
+        # Create a dictionary mapping job_id to saved_at
+        saved_at_map = {str(job["job_id"]): job["saved_at"] for job in saved_jobs}
 
         # Get unique job IDs
         job_ids = [job["job_id"] for job in saved_jobs]
 
         # Fetch job details
         jobs = list(jobs_collection.find({"_id": {"$in": [ObjectId(job_id) for job_id in job_ids]}}))
+        
+        # Prepare the response with saved_at included
         for job in jobs:
             job["_id"] = str(job["_id"])
             job["inserted_at"] = job.get("inserted_at", "N/A").isoformat() if isinstance(job.get("inserted_at"), datetime) else job.get("inserted_at", "N/A")
+            # Add saved_at from the saved_jobs_collection
+            job["saved_at"] = saved_at_map.get(str(job["_id"])).isoformat() if saved_at_map.get(str(job["_id"])) else "N/A"
 
         return Response({"saved_jobs": jobs}, status=status.HTTP_200_OK)
 
@@ -2078,7 +2136,7 @@ def get_saved_jobs(request):
             {"error": f"Failed to fetch saved jobs: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
+        
 @api_view(["POST"])
 def remove_saved_job(request):
     try:
