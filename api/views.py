@@ -24,9 +24,12 @@ import google.generativeai as genai
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import logging
-import requests
+import json
+import random
 import asyncio
+import aiohttp
 from playwright.async_api import async_playwright
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -224,385 +227,390 @@ def get_not_fit_jobs(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-proxy_list = [{'server': 'dc.oxylabs.io:8000', 'username': 'naveen_kY5lG', 'password': 'ea8vWq+NiqjurjkQ'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Gudbadugly_0cqzZ', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'ihubsns_zQVFs', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Testing_LoNLf', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'HarisankarJ_a5Nj2', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'akash_tNgmM', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Akilihub_Gy3Z1', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'mugilan_eGYDD', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'RNS_Sanjay_MZyzH', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'lathees_6pZh3', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'shruthi_1vvlk', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'kavin_bakyaraj_5cQ3F', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Ajay_Chakravarthi_B5RJy', 'password': 'SNS+ihub=123'}]
+# proxy_list = [{'server': 'dc.oxylabs.io:8000', 'username': 'naveen_kY5lG', 'password': 'ea8vWq+NiqjurjkQ'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Gudbadugly_0cqzZ', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'ihubsns_zQVFs', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Testing_LoNLf', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'HarisankarJ_a5Nj2', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'akash_tNgmM', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Akilihub_Gy3Z1', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'mugilan_eGYDD', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'RNS_Sanjay_MZyzH', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'lathees_6pZh3', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'shruthi_1vvlk', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'kavin_bakyaraj_5cQ3F', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Ajay_Chakravarthi_B5RJy', 'password': 'SNS+ihub=123'}]
 
 
-async def get_random_proxy(proxy_list):
-    proxy_now = random.choice(proxy_list)
-    try:
-        username = proxy_now["username"]
-        password = proxy_now["password"]
-        proxy = proxy_now["server"]
+# async def get_random_proxy(proxy_list):
+#     proxy_now = random.choice(proxy_list)
+#     try:
+#         username = proxy_now["username"]
+#         password = proxy_now["password"]
+#         proxy = proxy_now["server"]
 
-        proxies = {
-            "https": f'https://user-{username}:{password}@{proxy}'
-        }
+#         proxies = {
+#             "https": f'https://user-{username}:{password}@{proxy}'
+#         }
 
-        response = requests.get("https://ip.oxylabs.io/location", proxies=proxies)
-        if response.status_code == 200:
-            return proxy_now
-        else:
-            proxy_list.pop(proxy_list.index(proxy_now))
-            return await get_random_proxy(proxy_list)
-    except Exception as e:
-        print(e)
-        proxy_list.pop(proxy_list.index(proxy_now))
-        return await get_random_proxy(proxy_list)
+#         response = requests.get("https://ip.oxylabs.io/location", proxies=proxies)
+#         if response.status_code == 200:
+#             return proxy_now
+#         else:
+#             proxy_list.pop(proxy_list.index(proxy_now))
+#             return await get_random_proxy(proxy_list)
+#     except Exception as e:
+#         print(e)
+#         proxy_list.pop(proxy_list.index(proxy_now))
+#         return await get_random_proxy(proxy_list)
 
 
-async def setup_browser():
-    playwright = await async_playwright().start()
-    #proxy = await get_random_proxy(proxy_list)
+# async def setup_browser():
+#     playwright = await async_playwright().start()
+#     #proxy = await get_random_proxy(proxy_list)
     
-   # browser = await playwright.chromium.launch(
-    #    headless=False,
-     #   proxy={"server": proxy["server"], "username": proxy["username"], "password": proxy["password"]}
-   # )
-
-    browser = await playwright.chromium.launch(
-        headless=True
-    )
-    page = await browser.new_page()
-    return playwright, browser, page
-
-
-async def freelancer_scrapper(search_query):
-    playwright, browser, page = await setup_browser()
-    jobs = []
-
-    try:
-        await page.goto(f"https://www.freelancer.com/jobs/?keyword={search_query}&results=20", timeout=60000)
-        if "freelancer.com" not in page.url:
-            raise Exception("Failed to load Freelancer.com jobs page")
-
-        await page.wait_for_selector("//input[@id='keyword-input']", timeout=60000)
-        search_box = page.locator("//input[@id='keyword-input']")
-
-        if not await search_box.is_visible() or not await search_box.is_enabled():
-            raise Exception("Search input field not interactable")
-
-        await search_box.press("Enter")
-        await asyncio.sleep(3)
-
-        while True:
-            job_cards = await page.locator(".JobSearchCard-item").all()
-            if not job_cards:
-                print("No job listings found on the page")
-                break
-
-            for card in job_cards:
-                try:
-                    title_elem = card.locator(".JobSearchCard-primary-heading-link")
-                    title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
-                    link = await title_elem.get_attribute("href") if await title_elem.count() > 0 else None
-                    if link and not link.startswith("http"):
-                        link = f"https://www.freelancer.com{link}"
-
-                    desc_elem = card.locator(".JobSearchCard-primary-description")
-                    description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
-                    truncated_description = description.replace("\n", " ")
-
-                    budget_elem = card.locator(".JobSearchCard-primary-price")
-                    budget = (await budget_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
-
-                    proposal_elem = card.locator(".JobSearchCard-secondary-entry")
-                    proposals = (await proposal_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
-
-                    skills_elem = card.locator(".JobSearchCard-primary-tags")
-                    skills = await skills_elem.inner_text() if await skills_elem.count() > 0 else "N/A"
-
-                    post_ends = card.locator(".JobSearchCard-primary-heading-days")
-                    post_ends = await post_ends.inner_text() if await post_ends.count() > 0 else "N/A"
-
-                    job_data = {
-                        "title": title,
-                        "link": link,
-                        "description": truncated_description,
-                        "full_description": truncated_description,
-                        "budget": budget,
-                        "posted_time": "N/A",
-                        'proposals': proposals,
-                        "status": "Open",
-                        "post_ends": post_ends,
-                        "skills": skills,
-                        "keyword": search_query,
-                        "platform": "freelancer.com"
-                    }
-                    jobs.append(job_data)
-
-                except Exception as e:
-                    print(f"Error processing individual job: {e}")
-                    continue
-
-            next_button = page.locator("a[data-link='next_page']")
-            if await next_button.count() > 0 and await next_button.is_enabled():
-                await next_button.click()
-                await asyncio.sleep(2)
-                print(f"Moving to next page. Current job count: {len(jobs)}")
-            else:
-                print("No more pages to scrape")
-                break
-
-        print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
-
-    except Exception as e:
-        print(f"Scraping error: {e}")
-        print(f"Current URL: {page.url}")
-        print(f"Page title: {await page.title()}")
-
-    finally:
-        await browser.close()
-        await playwright.stop()
-
-    return jobs
-
-async def guru_scrapper(search_query):
-    playwright, browser, page = await setup_browser()
-    jobs = []
-
-    try:
-        url = f"https://www.guru.com/d/jobs/skill/{search_query}/"
-        await page.goto(url, wait_until='load')
-        if "guru.com" not in page.url:
-            raise Exception("Failed to load Guru.com jobs page")
-
-        await asyncio.sleep(3)
-
-        job_cards = await page.locator("div.record__details").all()
-        if not job_cards:
-            print("No job listings found on the page")
-
-        for card in job_cards:
-            try:
-                title_elem = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']")
-                title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
-
-                link_elm = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']//a")
-                link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
-                if link and not link.startswith("http") and not link.startswith("https"):
-                    link = f"https://www.guru.com{link}"
-
-                desc_elem = card.locator('//p[@class="jobRecord__desc"]')
-                truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
-                truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
-
-                posted_time_elem = card.locator("//div[@class='jobRecord__meta']//strong[1]")
-                posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
-
-                post_ends_elem = card.locator('//p[@class="copy small grey rhythmMargin1"]')
-                post_ends = await post_ends_elem.inner_text() if await post_ends_elem.count() > 0 else "N/A"
-
-                budget_elem = card.locator("//div[@class='jobRecord__budget']")
-                budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
-
-                proposals_elem = card.locator("div.jobRecord__meta > strong:nth-child(2)")
-                proposals = await proposals_elem.inner_text() if await proposals_elem.count() > 0 else "N/A"
-
-                skill_elem = card.locator(".skillsList")
-                skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
-
-                job_data = {
-                    "title": title,
-                    "link": link,
-                    "description": truncated_description,
-                    "full_description": truncated_description,
-                    "budget": budget,
-                    "posted_time": posted_time,
-                    'proposals': proposals,
-                    "status": "Open",
-                    "post_ends": post_ends,
-                    "skills": skills,
-                    "keyword": search_query,
-                    "platform": "guru.com"
-                }
-                jobs.append(job_data)
-
-            except Exception as e:
-                print(f"Error processing individual job: {e}")
-                continue
-
-        print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
-
-    except Exception as e:
-        print(f"Scraping error: {e}")
-        print(f"Current URL: {page.url}")
-        print(f"Page title: {await page.title()}")
-
-    finally:
-        await browser.close()
-        await playwright.stop()
-
-    return jobs
-
-async def upwork_scrapper(search_query):
-    playwright, browser, page = await setup_browser()
-    jobs = []
-
-    try:
-        url = f"https://www.upwork.com/nx/search/jobs/?per_page=50&q={search_query}"
-        await page.goto(url, wait_until='load')
-        if "upwork.com" not in page.url:
-            raise Exception("Failed to load Upwork.com jobs page")
-
-        job_cards = await page.locator('(//article[@data-ev-label="search_results_impression"])').all()
-        if not job_cards:
-            print("No job listings found on the page")
-
-        await asyncio.sleep(3)
-
-        for card in job_cards:
-            try:
-                title_elem = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]')
-                title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
-
-                link_elm = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]//a')
-                link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
-                if link and not link.startswith("http") and not link.startswith("https"):
-                    link = f"https://www.upwork.com{link}"
-
-                desc_elem = card.locator('.mb-0.text-body-sm')
-                truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
-                truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
-
-                posted_time_elem = card.locator("//small[@data-test='job-pubilshed-date']")
-                posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
-
-                skill_elem = card.locator('div.air3-token-container')
-                skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
-
-                meta_data_elem = card.locator('//ul[@data-test="JobInfo"]')
-                meta_data = await meta_data_elem.inner_text() if await meta_data_elem.count() > 0 else "N/A"
-                meta_data = meta_data.replace('\n', " ")
-
-                job_data = {
-                    "title": title,
-                    "link": link,
-                    "description": truncated_description,
-                    "full_description": truncated_description,
-                    "budget": "N/A",
-                    "posted_time": posted_time,
-                    "meta_data": meta_data,
-                    "status": "Open",
-                    "skills": skills,
-                    "keyword": search_query,
-                    "platform": "upwork.com"
-                }
-                jobs.append(job_data)
-
-            except Exception as e:
-                print(f"Error processing individual job: {e}")
-                continue
-
-        print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
-
-    except Exception as e:
-        print(f"Scraping error: {e}")
-        print(f"Current URL: {page.url}")
-        print(f"Page title: {await page.title()}")
-
-    finally:
-        await browser.close()
-        await playwright.stop()
-
-    return jobs
-
-async def peopleperhour_scrapper(search_query):
-    playwright, browser, page = await setup_browser()
-    jobs = []
-
-    try:
-        url = f"https://www.peopleperhour.com/freelance-{search_query}-jobs"
-        await page.goto(url, wait_until='load')
-        if "peopleperhour.com" not in page.url:
-            raise Exception("Failed to load PeoplePerHour.com jobs page")
-
-        await asyncio.sleep(5)
-
-        job_cards = await page.locator("//li[@class='list__item⤍List⤚2ytmm']").all()
-        if not job_cards:
-            print("No job listings found on the page")
-
-        for card in job_cards:
-            try:
-                title_elem = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
-                title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
-
-                link_elm = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
-                link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
-                if link and not link.startswith("http") and not link.startswith("https"):
-                    link = f"https://www.peopleperhour.com{link}"
-
-                desc_elem = card.locator('//p[@class="item__desc⤍ListItem⤚3f4JV"]')
-                truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
-                truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
-
-                posted_time_elem = card.locator('//div[@class="card__footer⤍ListItem⤚1KHhv"]//span[2]/preceding-sibling::span[1]')
-                posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
-
-                proposals = card.locator('//div[@class="nano card__footer-left⤍ListItem⤚16Odv"]//span[2]')
-                proposals = await proposals.inner_text() if await proposals.count() > 0 else "N/A"
-
-                budget_elem = card.locator("//div[contains(@class, 'card__price')]/span[@class='title-nano']/div/span")
-                budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
-
-                job_data = {
-                    "title": title,
-                    "link": link,
-                    "description": truncated_description,
-                    "full_description": truncated_description,
-                    "budget": budget,
-                    "posted_time": posted_time,
-                    "proposals": proposals,
-                    "post_ends": "N/A",
-                    "status": "Open",
-                    "skills": "N/A",
-                    "keyword": search_query,
-                    "platform": "peopleperhour.com"
-                }
-                jobs.append(job_data)
-
-            except Exception as e:
-                print(f"Error processing individual job: {e}")
-                continue
-
-        print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
-
-    except Exception as e:
-        print(f"Scraping error: {e}")
-        print(f"Current URL: {page.url}")
-        print(f"Page title: {await page.title()}")
-
-    finally:
-        await browser.close()
-        await playwright.stop()
-
-    return jobs
-
-
-
-async def scrapper(search_query_list):
-    jobs = []
-    for search_query in search_query_list:
-        tasks = [
-            freelancer_scrapper(search_query),
-            guru_scrapper(search_query),
-            upwork_scrapper(search_query),
-            peopleperhour_scrapper(search_query)
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+#    # browser = await playwright.chromium.launch(
+#     #    headless=False,
+#      #   proxy={"server": proxy["server"], "username": proxy["username"], "password": proxy["password"]}
+#    # )
+
+#     browser = await playwright.chromium.launch(
+#         headless=True
+#     )
+#     page = await browser.new_page()
+#     return playwright, browser, page
+
+
+
+# async def freelancer_scrapper(search_query):
+#     playwright, browser, page = await setup_browser()
+#     jobs = []
+
+#     try:
+#         await page.goto(f"https://www.freelancer.com/jobs/?keyword={search_query}&results=20", timeout=60000)
+#         if "freelancer.com" not in page.url:
+#             raise Exception("Failed to load Freelancer.com jobs page")
+
+#         await asyncio.sleep(3)
+
+#         await page.wait_for_selector("//input[@id='keyword-input']", timeout=60000)
+#         search_box = page.locator("//input[@id='keyword-input']")
+
+#         if not await search_box.is_visible() or not await search_box.is_enabled():
+#             raise Exception("Search input field not interactable")
+
+#         await search_box.press("Enter")
+#         await asyncio.sleep(3)
+
+#         while True:
+#             job_cards = await page.locator(".JobSearchCard-item").all()
+#             if not job_cards:
+#                 print("No job listings found on the page")
+#                 break
+
+#             for card in job_cards:
+#                 try:
+#                     title_elem = card.locator(".JobSearchCard-primary-heading-link")
+#                     title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+#                     link = await title_elem.get_attribute("href") if await title_elem.count() > 0 else None
+#                     if link and not link.startswith("http"):
+#                         link = f"https://www.freelancer.com{link}"
+
+#                     desc_elem = card.locator(".JobSearchCard-primary-description")
+#                     description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+#                     truncated_description = description.replace("\n", " ")
+
+#                     budget_elem = card.locator(".JobSearchCard-primary-price")
+#                     budget = (await budget_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
+
+#                     proposal_elem = card.locator(".JobSearchCard-secondary-entry")
+#                     proposals = (await proposal_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
+
+#                     skills_elem = card.locator(".JobSearchCard-primary-tags")
+#                     skills = await skills_elem.inner_text() if await skills_elem.count() > 0 else "N/A"
+
+#                     post_ends = card.locator(".JobSearchCard-primary-heading-days")
+#                     post_ends = await post_ends.inner_text() if await post_ends.count() > 0 else "N/A"
+
+#                     job_data = {
+#                         "title": title,
+#                         "link": link,
+#                         "description": truncated_description,
+#                         "full_description": truncated_description,
+#                         "budget": budget,
+#                         "posted_time": "N/A",
+#                         'proposals': proposals,
+#                         "status": "Open",
+#                         "post_ends": post_ends,
+#                         "skills": skills,
+#                         "keyword": search_query,
+#                         "platform": "freelancer.com"
+#                     }
+#                     if title != "N/A" :
+#                         jobs.append(job_data)
+
+#                 except Exception as e:
+#                     print(f"Error processing individual job: {e}")
+#                     continue
+
+#             next_button = page.locator("a[data-link='next_page']")
+#             if await next_button.count() > 0 and await next_button.is_enabled():
+#                 await next_button.click()
+#                 await asyncio.sleep(2)
+#                 print(f"Moving to next page. Current job count: {len(jobs)}")
+#             else:
+#                 print("No more pages to scrape")
+#                 break
+
+#         print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+
+#     except Exception as e:
+#         print(f"Scraping error: {e}")
+#         print(f"Current URL: {page.url}")
+#         print(f"Page title: {await page.title()}")
+
+#     finally:
+#         await browser.close()
+#         await playwright.stop()
+
+#     return jobs
+
+# async def guru_scrapper(search_query):
+#     playwright, browser, page = await setup_browser()
+#     jobs = []
+
+#     try:
+#         url = f"https://www.guru.com/d/jobs/skill/{search_query}/"
+#         await page.goto(url, wait_until='load')
+#         if "guru.com" not in page.url:
+#             raise Exception("Failed to load Guru.com jobs page")
+
+#         await asyncio.sleep(5)
+
+#         job_cards = await page.locator("div.record__details").all()
+#         if not job_cards:
+#             print("No job listings found on the page")
+
+#         for card in job_cards:
+#             try:
+#                 title_elem = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']")
+#                 title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+#                 link_elm = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']//a")
+#                 link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+#                 if link and not link.startswith("http") and not link.startswith("https"):
+#                     link = f"https://www.guru.com{link}"
+
+#                 desc_elem = card.locator('//p[@class="jobRecord__desc"]')
+#                 truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+#                 truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+#                 posted_time_elem = card.locator("//div[@class='jobRecord__meta']//strong[1]")
+#                 posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+#                 post_ends_elem = card.locator('//p[@class="copy small grey rhythmMargin1"]')
+#                 post_ends = await post_ends_elem.inner_text() if await post_ends_elem.count() > 0 else "N/A"
+
+#                 budget_elem = card.locator("//div[@class='jobRecord__budget']")
+#                 budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
+
+#                 proposals_elem = card.locator("div.jobRecord__meta > strong:nth-child(2)")
+#                 proposals = await proposals_elem.inner_text() if await proposals_elem.count() > 0 else "N/A"
+
+#                 skill_elem = card.locator(".skillsList")
+#                 skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
+
+#                 job_data = {
+#                     "title": title,
+#                     "link": link,
+#                     "description": truncated_description,
+#                     "full_description": truncated_description,
+#                     "budget": budget,
+#                     "posted_time": posted_time,
+#                     'proposals': proposals,
+#                     "status": "Open",
+#                     "post_ends": post_ends,
+#                     "skills": skills,
+#                     "keyword": search_query,
+#                     "platform": "guru.com"
+#                 }
+#                 jobs.append(job_data)
+
+#             except Exception as e:
+#                 print(f"Error processing individual job: {e}")
+#                 continue
+
+#         print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+
+#     except Exception as e:
+#         print(f"Scraping error: {e}")
+#         print(f"Current URL: {page.url}")
+#         print(f"Page title: {await page.title()}")
+
+#     finally:
+#         await browser.close()
+#         await playwright.stop()
+
+#     return jobs
+
+# async def upwork_scrapper(search_query):
+#     playwright, browser, page = await setup_browser()
+#     jobs = []
+
+#     try:
+#         url = f"https://www.upwork.com/nx/search/jobs/?per_page=50&q={search_query}"
+#         await page.goto(url, wait_until='load')
+#         if "upwork.com" not in page.url:
+#             raise Exception("Failed to load Upwork.com jobs page")
+
+#         job_cards = await page.locator('(//article[@data-ev-label="search_results_impression"])').all()
+#         if not job_cards:
+#             print("No job listings found on the page")
+
+#         await asyncio.sleep(5)
+
+#         for card in job_cards:
+#             try:
+#                 title_elem = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]')
+#                 title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+#                 link_elm = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]//a')
+#                 link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+#                 if link and not link.startswith("http") and not link.startswith("https"):
+#                     link = f"https://www.upwork.com{link}"
+
+#                 desc_elem = card.locator('.mb-0.text-body-sm')
+#                 truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+#                 truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+#                 posted_time_elem = card.locator("//small[@data-test='job-pubilshed-date']")
+#                 posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+#                 skill_elem = card.locator('div.air3-token-container')
+#                 skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
+
+#                 meta_data_elem = card.locator('//ul[@data-test="JobInfo"]')
+#                 meta_data = await meta_data_elem.inner_text() if await meta_data_elem.count() > 0 else "N/A"
+#                 meta_data = meta_data.replace('\n', " ")
+
+#                 job_data = {
+#                     "title": title,
+#                     "link": link,
+#                     "description": truncated_description,
+#                     "full_description": truncated_description,
+#                     "budget": "N/A",
+#                     "posted_time": posted_time,
+#                     "meta_data": meta_data,
+#                     "status": "Open",
+#                     "skills": skills,
+#                     "keyword": search_query,
+#                     "platform": "upwork.com"
+#                 }
+#                 jobs.append(job_data)
+
+#             except Exception as e:
+#                 print(f"Error processing individual job: {e}")
+#                 continue
+
+#         print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+
+#     except Exception as e:
+#         print(f"Scraping error: {e}")
+#         print(f"Current URL: {page.url}")
+#         print(f"Page title: {await page.title()}")
+
+#     finally:
+#         await browser.close()
+#         await playwright.stop()
+
+#     return jobs
+
+# async def peopleperhour_scrapper(search_query):
+#     playwright, browser, page = await setup_browser()
+#     jobs = []
+
+#     try:
+#         url = f"https://www.peopleperhour.com/freelance-{search_query}-jobs"
+#         await page.goto(url, wait_until='load')
+#         if "peopleperhour.com" not in page.url:
+#             raise Exception("Failed to load PeoplePerHour.com jobs page")
+
+#         await asyncio.sleep(5)
+
+#         job_cards = await page.locator("//li[@class='list__item⤍List⤚2ytmm']").all()
+#         if not job_cards:
+#             print("No job listings found on the page")
+
+#         for card in job_cards:
+#             try:
+#                 title_elem = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
+#                 title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+#                 link_elm = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
+#                 link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+#                 if link and not link.startswith("http") and not link.startswith("https"):
+#                     link = f"https://www.peopleperhour.com{link}"
+
+#                 desc_elem = card.locator('//p[@class="item__desc⤍ListItem⤚3f4JV"]')
+#                 truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+#                 truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+#                 posted_time_elem = card.locator('//div[@class="card__footer⤍ListItem⤚1KHhv"]//span[2]/preceding-sibling::span[1]')
+#                 posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+#                 proposals = card.locator('//div[@class="nano card__footer-left⤍ListItem⤚16Odv"]//span[2]')
+#                 proposals = await proposals.inner_text() if await proposals.count() > 0 else "N/A"
+
+#                 budget_elem = card.locator("//div[contains(@class, 'card__price')]/span[@class='title-nano']/div/span")
+#                 budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
+
+#                 job_data = {
+#                     "title": title,
+#                     "link": link,
+#                     "description": truncated_description,
+#                     "full_description": truncated_description,
+#                     "budget": budget,
+#                     "posted_time": posted_time,
+#                     "proposals": proposals,
+#                     "post_ends": "N/A",
+#                     "status": "Open",
+#                     "skills": "N/A",
+#                     "keyword": search_query,
+#                     "platform": "peopleperhour.com"
+#                 }
+#                 jobs.append(job_data)
+
+#             except Exception as e:
+#                 print(f"Error processing individual job: {e}")
+#                 continue
+
+#         print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+
+#     except Exception as e:
+#         print(f"Scraping error: {e}")
+#         print(f"Current URL: {page.url}")
+#         print(f"Page title: {await page.title()}")
+
+#     finally:
+#         await browser.close()
+#         await playwright.stop()
+
+#     return jobs
+
+
+
+
+# async def scrapper(search_query_list):
+#     jobs = []
+#     for search_query in search_query_list:
+#         tasks = [
+#             freelancer_scrapper(search_query),
+#             guru_scrapper(search_query),
+#             upwork_scrapper(search_query),
+#             peopleperhour_scrapper(search_query)
+#         ]
+#         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        for result in results:
-            if isinstance(result, list):
-                jobs.extend(result)
-            else:
-                print(f"Error in concurrent scraping: {result}")
+#         for result in results:
+#             if isinstance(result, list):
+#                 jobs.extend(result)
+#             else:
+#                 print(f"Error in concurrent scraping: {result}")
         
-        print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
+#         print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
 
-        #with open("bun.json", "w") as f:
-         #   json.dump(jobs, f, indent=2)
+#         #with open("bun.json", "w") as f:
+#          #   json.dump(jobs, f, indent=2)
     
-    return jobs
+#     return jobs
 
 # def scrapper(search_query_list):
 #     jobs = []
@@ -637,6 +645,381 @@ async def scrapper(search_query_list):
 #         #    json.dump(jobs, f, indent=2)
 
 #     return jobs
+
+
+
+# Global USER_AGENTS
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Android 14; Mobile; rv:124.0) Gecko/124.0 Firefox/124.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+]
+
+proxy_list = [{'server': 'dc.oxylabs.io:8000', 'username': 'naveen_kY5lG', 'password': 'ea8vWq+NiqjurjkQ'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Gudbadugly_0cqzZ', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'ihubsns_zQVFs', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Testing_LoNLf', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'HarisankarJ_a5Nj2', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'akash_tNgmM', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Akilihub_Gy3Z1', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'mugilan_eGYDD', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'RNS_Sanjay_MZyzH', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'lathees_6pZh3', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'shruthi_1vvlk', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'kavin_bakyaraj_5cQ3F', 'password': 'SNS+ihub=123'}, {'server': 'dc.oxylabs.io:8000', 'username': 'Ajay_Chakravarthi_B5RJy', 'password': 'SNS+ihub=123'}]
+
+
+# Semaphore for rate limiting (max 4 concurrent requests)
+semaphore = asyncio.Semaphore(30)
+
+async def get_random_proxy(proxy_list):
+    tried_usernames = set()
+    async with aiohttp.ClientSession() as session:
+        while len(tried_usernames) < len(proxy_list):
+            proxy_now = random.choice([p for p in proxy_list if p["username"] not in tried_usernames])
+            tried_usernames.add(proxy_now["username"])
+            try:
+                username = proxy_now["username"]
+                password = proxy_now["password"]
+                proxy = proxy_now["server"]
+                proxy_url = f"http://{username}:{password}@{proxy}"
+                async with session.get("https://ip.oxylabs.io/location", proxy=proxy_url, timeout=aiohttp.ClientTimeout(total=2)) as response:
+                    if response.status == 200:
+                        return proxy_now
+            except Exception as e:
+                print(f"Proxy {proxy_now['username']} failed: {e}")
+                continue
+        raise Exception("No working proxies found")
+
+async def setup_browser(playwright, proxy):
+    browser = await playwright.chromium.launch(
+        headless=True,
+        proxy={"server": proxy["server"], "username": proxy["username"], "password": proxy["password"]}
+    )
+    context = await browser.new_context(user_agent=random.choice(USER_AGENTS))
+    page = await context.new_page()
+    return browser, context, page
+
+async def freelancer_scrapper(search_query, browser, context):
+    async with semaphore:  # Rate limiting
+        page = await context.new_page()
+        jobs = []
+        try:
+            await page.goto(f"https://www.freelancer.com/jobs/?keyword={search_query}&results=100", timeout=100000)
+            if "freelancer.com" not in page.url:
+                raise Exception("Failed to load Freelancer.com jobs page")
+            # await page.wait_for_load_state("domcontentloaded", timeout=1000000)
+            # await page.wait_for_selector("//input[@id='keyword-input']", timeout=100000)
+            search_box = page.locator("//input[@id='keyword-input']")
+            if not await search_box.is_visible() or not await search_box.is_enabled():
+                raise Exception("Search input field not interactable")
+
+            await search_box.press("Enter")
+            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+
+            while True:
+                job_cards = await page.locator(".JobSearchCard-item").all()
+                if not job_cards:
+                    print("No job listings found on the page")
+                    break
+
+                for card in job_cards:
+                    try:
+                        title_elem = card.locator(".JobSearchCard-primary-heading-link")
+                        title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+                        link = await title_elem.get_attribute("href") if await title_elem.count() > 0 else None
+                        if link and not link.startswith("http"):
+                            link = f"https://www.freelancer.com{link}"
+
+                        desc_elem = card.locator(".JobSearchCard-primary-description")
+                        description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+                        truncated_description = description.replace("\n", " ")
+
+                        budget_elem = card.locator(".JobSearchCard-primary-price")
+                        budget = (await budget_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
+
+                        proposal_elem = card.locator(".JobSearchCard-secondary-entry")
+                        proposals = (await proposal_elem.inner_text()).strip().replace(" ", "") if await budget_elem.count() > 0 else "N/A"
+
+                        skills_elem = card.locator(".JobSearchCard-primary-tags")
+                        skills = await skills_elem.inner_text() if await skills_elem.count() > 0 else "N/A"
+
+                        post_ends = card.locator(".JobSearchCard-primary-heading-days")
+                        post_ends = await post_ends.inner_text() if await post_ends.count() > 0 else "N/A"
+
+                        job_data = {
+                            "title": title,
+                            "link": link,
+                            "description": truncated_description,
+                            "full_description": truncated_description,
+                            "budget": budget,
+                            "posted_time": "N/A",
+                            'proposals': proposals,
+                            "status": "Open",
+                            "post_ends": post_ends,
+                            "skills": skills,
+                            "keyword": search_query,
+                            "platform": "freelancer.com"
+                        }
+                        if title != "N/A":
+                            jobs.append(job_data)
+                    except Exception as e:
+                        print(f"Error processing individual job: {e}")
+                        continue
+
+                next_button = page.locator("a[data-link='next_page']")
+                if await next_button.count() > 0 and await next_button.is_enabled():
+                    await next_button.click()
+                    # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+                    await page.wait_for_selector(".JobSearchCard-item", timeout=100000)
+                    print(f"Moving to next page. Current job count: {len(jobs)}")
+                else:
+                    print("No more pages to scrape")
+                    break
+
+            print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+        except Exception as e:
+            print(f"Scraping error: {e}")
+            print(f"Current URL: {page.url}")
+            print(f"Page title: {await page.title()}")
+        finally:
+            await page.close()
+        return jobs
+
+async def guru_scrapper(search_query, browser, context):
+    async with semaphore:  # Rate limiting
+        page = await context.new_page()
+        jobs = []
+        try:
+            url = f"https://www.guru.com/d/jobs/skill/{search_query}/"
+            await page.goto(url, wait_until='load')
+            if "guru.com" not in page.url:
+                raise Exception("Failed to load Guru.com jobs page")
+            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+            await page.wait_for_selector("//div[@class='record__details']", timeout=100000)
+
+            job_cards = await page.locator("div.record__details").all()
+            if not job_cards:
+                print("No job listings found on the page")
+
+            for card in job_cards:
+                try:
+                    title_elem = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']")
+                    title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+                    link_elm = card.locator("//h2[@class='jobRecord__title jobRecord__title--changeVisited']//a")
+                    link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+                    if link and not link.startswith("http") and not link.startswith("https"):
+                        link = f"https://www.guru.com{link}"
+
+                    desc_elem = card.locator('//p[@class="jobRecord__desc"]')
+                    truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+                    truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+                    posted_time_elem = card.locator("//div[@class='jobRecord__meta']//strong[1]")
+                    posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+                    post_ends_elem = card.locator('//p[@class="copy small grey rhythmMargin1"]')
+                    post_ends = await post_ends_elem.inner_text() if await post_ends_elem.count() > 0 else "N/A"
+
+                    budget_elem = card.locator("//div[@class='jobRecord__budget']")
+                    budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
+
+                    proposals_elem = card.locator("div.jobRecord__meta > strong:nth-child(2)")
+                    proposals = await proposals_elem.inner_text() if await proposals_elem.count() > 0 else "N/A"
+
+                    skill_elem = card.locator(".skillsList")
+                    skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
+
+                    job_data = {
+                        "title": title,
+                        "link": link,
+                        "description": truncated_description,
+                        "full_description": truncated_description,
+                        "budget": budget,
+                        "posted_time": posted_time,
+                        'proposals': proposals,
+                        "status": "Open",
+                        "post_ends": post_ends,
+                        "skills": skills,
+                        "keyword": search_query,
+                        "platform": "guru.com"
+                    }
+                    jobs.append(job_data)
+                except Exception as e:
+                    print(f"Error processing individual job: {e}")
+                    continue
+
+            print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+        except Exception as e:
+            print(f"Scraping error: {e}")
+            print(f"Current URL: {page.url}")
+            print(f"Page title: {await page.title()}")
+        finally:
+            await page.close()
+        return jobs
+
+async def upwork_scrapper(search_query, browser, context):
+    async with semaphore:  # Rate limiting
+        page = await context.new_page()
+        jobs = []
+        try:
+            url = f"https://www.upwork.com/nx/search/jobs/?per_page=50&q={search_query}"
+            await page.goto(url, wait_until='load')
+            if "upwork.com" not in page.url:
+                raise Exception("Failed to load Upwork.com jobs page")
+            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+            # await page.reload()
+
+            job_cards = await page.locator('(//article[@data-ev-label="search_results_impression"])').all()
+            if not job_cards:
+                print("No job listings found on the page")
+
+            for card in job_cards:
+                try:
+                    title_elem = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]')
+                    title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+                    link_elm = card.locator('//h2[@class="h5 mb-0 mr-2 job-tile-title"]//a')
+                    link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+                    if link and not link.startswith("http") and not link.startswith("https"):
+                        link = f"https://www.upwork.com{link}"
+
+                    desc_elem = card.locator('.mb-0.text-body-sm')
+                    truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+                    truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+                    posted_time_elem = card.locator("//small[@data-test='job-pubilshed-date']")
+                    posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+                    skill_elem = card.locator('div.air3-token-container')
+                    skills = await skill_elem.inner_text() if await skill_elem.count() > 0 else "N/A"
+
+                    meta_data_elem = card.locator('//ul[@data-test="JobInfo"]')
+                    meta_data = await meta_data_elem.inner_text() if await meta_data_elem.count() > 0 else "N/A"
+                    meta_data = meta_data.replace('\n', " ")
+
+                    job_data = {
+                        "title": title,
+                        "link": link,
+                        "description": truncated_description,
+                        "full_description": truncated_description,
+                        "budget": "N/A",
+                        "posted_time": posted_time,
+                        "meta_data": meta_data,
+                        "status": "Open",
+                        "skills": skills,
+                        "keyword": search_query,
+                        "platform": "upwork.com"
+                    }
+                    jobs.append(job_data)
+                except Exception as e:
+                    print(f"Error processing individual job: {e}")
+                    continue
+
+            print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+        except Exception as e:
+            print(f"Scraping error: {e}")
+            print(f"Current URL: {page.url}")
+            print(f"Page title: {await page.title()}")
+        finally:
+            await page.close()
+        return jobs
+
+async def peopleperhour_scrapper(search_query, browser, context):
+    async with semaphore:  # Rate limiting
+        page = await context.new_page()
+        jobs = []
+        try:
+            url = f"https://www.peopleperhour.com/freelance-{search_query}-jobs"
+            await page.goto(url, wait_until='load')
+            if "peopleperhour.com" not in page.url:
+                raise Exception("Failed to load PeoplePerHour.com jobs page")
+            # await page.wait_for_load_state("domcontentloaded", timeout=60000)
+            await page.wait_for_selector("//li[@class='list__item⤍List⤚2ytmm']", timeout=100000)
+
+            job_cards = await page.locator("//li[@class='list__item⤍List⤚2ytmm']").all()
+            if not job_cards:
+                print("No job listings found on the page")
+
+            for card in job_cards:
+                try:
+                    title_elem = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
+                    title = await title_elem.inner_text() if await title_elem.count() > 0 else "N/A"
+
+                    link_elm = card.locator("//a[@class='item__url⤍ListItem⤚20ULx']")
+                    link = await link_elm.get_attribute("href") if await link_elm.count() > 0 else None
+                    if link and not link.startswith("http") and not link.startswith("https"):
+                        link = f"https://www.peopleperhour.com{link}"
+
+                    desc_elem = card.locator('//p[@class="item__desc⤍ListItem⤚3f4JV"]')
+                    truncated_description = await desc_elem.inner_text() if await desc_elem.count() > 0 else "N/A"
+                    truncated_description = " ".join(word for word in truncated_description.split() if not word.startswith(r"\u"))
+
+                    posted_time_elem = card.locator('//div[@class="card__footer⤍ListItem⤚1KHhv"]//span[2]/preceding-sibling::span[1]')
+                    posted_time = await posted_time_elem.inner_text() if await posted_time_elem.count() > 0 else "N/A"
+
+                    proposals = card.locator('//div[@class="nano card__footer-left⤍ListItem⤚16Odv"]//span[2]')
+                    proposals = await proposals.inner_text() if await proposals.count() > 0 else "N/A"
+
+                    budget_elem = card.locator("//div[contains(@class, 'card__price')]/span[@class='title-nano']/div/span")
+                    budget = await budget_elem.inner_text() if await budget_elem.count() > 0 else "N/A"
+
+                    job_data = {
+                        "title": title,
+                        "link": link,
+                        "description": truncated_description,
+                        "full_description": truncated_description,
+                        "budget": budget,
+                        "posted_time": posted_time,
+                        "proposals": proposals,
+                        "post_ends": "N/A",
+                        "status": "Open",
+                        "skills": "N/A",
+                        "keyword": search_query,
+                        "platform": "peopleperhour.com"
+                    }
+                    jobs.append(job_data)
+                except Exception as e:
+                    print(f"Error processing individual job: {e}")
+                    continue
+
+            print(f"{page.url} Successfully scraped {len(jobs)} jobs for query: '{search_query}'")
+        except Exception as e:
+            print(f"Scraping error: {e}")
+            print(f"Current URL: {page.url}")
+            print(f"Page title: {await page.title()}")
+        finally:
+            await page.close()
+        return jobs
+
+async def scrapper(search_query_list):
+    jobs = []
+    async with async_playwright() as playwright:
+        # proxy = await get_random_proxy(proxy_list)
+        # browser, context, _ = await setup_browser(playwright, proxy)  # Single browser instance
+
+        
+        for search_query in search_query_list:
+            proxy = await get_random_proxy(proxy_list)
+            print(f"Using proxy: {proxy}")
+            browser, context, _ = await setup_browser(playwright, proxy)  # Single browser instance
+        
+            tasks = [
+                freelancer_scrapper(search_query, browser, context),
+                guru_scrapper(search_query, browser, context),
+                upwork_scrapper(search_query, browser, context),
+                peopleperhour_scrapper(search_query, browser, context)
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for result in results:
+                if isinstance(result, list):
+                    jobs.extend(result)
+                else:
+                    print(f"Error in concurrent scraping: {result}")
+            
+            print(f"Total jobs scraped for query '{search_query}': {len(jobs)}")
+            # with open("bun.json", "w") as f:
+            #     json.dump(jobs, f, indent=2)
+        
+            await browser.close()  # Close browser once all scraping is done
+    
+    return jobs
 
 def perform_scraping(search_query, platform, username):
     try:
@@ -1107,6 +1490,7 @@ def createaccount(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body.decode("utf-8"))
+            print(data)
             username = data.get("username", "").strip()
             email = data.get("email", "").strip()
             phone = data.get("phone", "").strip()
@@ -1127,7 +1511,24 @@ def createaccount(request):
                 "email": email,
                 "phone": phone,
                 "password": hashed_password,
+                "settings": {
+                "scrapingMode": "automatic",
+                "automaticScrapeInterval": {
+                  "hours": 0,
+                  "minutes": 1
+                },
+                "notificationsEnabled": True,
+                "notificationEmail": email,
+                "notificationKeywords": [],
+                "selectedPlatforms": {
+                  "freelancer": True,
+                  "upwork": True,
+                  "fiverr": False
+                }
             }
+            }
+
+            print(user_data)
             meetings_collection.insert_one(user_data)
 
             admin_data = {

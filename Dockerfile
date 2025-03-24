@@ -25,4 +25,4 @@ COPY . /app/
 
 #CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8000", "backend.wsgi:application"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
+#CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
